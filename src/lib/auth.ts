@@ -347,7 +347,7 @@ export async function register(input: {
   cachedRaw = JSON.stringify(user);
   cachedUser = user;
 
-  await insertLog({
+  void insertLog({
     user_id: data.user.id,
     action: "New account registered",
     status: "Success",
