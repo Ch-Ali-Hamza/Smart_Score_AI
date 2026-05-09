@@ -399,6 +399,29 @@ export async function getCurrentUser() {
   return data
 }
 
+export async function getTeacherDashboardData() {
+  const [user, students, marksResult, attendanceResult] = await Promise.all([
+    getCurrentUser(),
+    getStudents(),
+    supabase
+      .from('marks')
+      .select('student_id, marks_obtained, total_marks'),
+    supabase
+      .from('attendance')
+      .select('student_id, status'),
+  ])
+
+  if (marksResult.error) throw new Error(marksResult.error.message)
+  if (attendanceResult.error) throw new Error(attendanceResult.error.message)
+
+  return {
+    user,
+    students,
+    marks: marksResult.data || [],
+    attendance: attendanceResult.data || [],
+  }
+}
+
 // =========================
 // LOGS
 // =========================
