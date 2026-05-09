@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { login, register, type Role } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { dashboardFor } from "@/components/app-shell";
+import campusBg from "@/assets/university-bg.jpg";
 
 export const Route = createFileRoute("/")(
   {
