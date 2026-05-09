@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { Bar, BarChart, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AppShell } from "@/components/app-shell";
 import { teacherNav } from "@/lib/nav-config";
-import { Card, DataTable, PageHeader, Pill, StatCard } from "@/components/ui-kit";
+import { Card, DataTable, HeroHeader, Pill, StatCard } from "@/components/ui-kit";
+import { Presentation } from "lucide-react";
 import { getStudents, getAttendancePercent, getSubjectAverages, scoreToGrade, getCurrentUser } from "@/lib/db";
 
 export const Route = createFileRoute("/teacher/")({
