@@ -5,7 +5,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { AppShell } from "@/components/app-shell";
 import { studentNav } from "@/lib/nav-config";
 import { Card, PageHeader, StatCard } from "@/components/ui-kit";
-import { getCurrentStudent, getMarksByStudent, getAttendanceByStudent } from "@/lib/db";
+import { getCurrentStudent, getStudentDashboardData } from "@/lib/db";
 
 export const Route = createFileRoute("/student/subject/$name")({
   head: () => ({ meta: [{ title: "Subject Detail — SmartScore AI" }] }),
@@ -23,10 +23,10 @@ function SubjectDetail() {
     (async () => {
       const student = await getCurrentStudent();
       if (!student) { setLoading(false); return; }
-      const [m, a] = await Promise.all([getMarksByStudent(student.id), getAttendanceByStudent(student.id)]);
-      setMarks(m.filter((x: any) => x.subject === subjectName));
-      const present = a.filter((x: any) => x.status === "present").length;
-      setAttendance(a.length > 0 ? Math.round((present / a.length) * 100) : 0);
+      const data = await getStudentDashboardData(student.user_id);
+      setMarks(data.marks.filter((x: any) => x.subject === subjectName));
+      const present = data.attendance.filter((x: any) => x.status === "present").length;
+      setAttendance(data.attendance.length > 0 ? Math.round((present / data.attendance.length) * 100) : 0);
       setLoading(false);
     })();
   }, [subjectName]);
