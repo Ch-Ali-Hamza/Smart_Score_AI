@@ -244,16 +244,8 @@ export async function register(input: {
   const trimmedName = input.name.trim() || "User";
   const trimmedEmail = input.email.trim().toLowerCase();
 
-  // Prevent duplicate profile rows
-  const existing = await supabase
-    .from("users")
-    .select("id")
-    .eq("email", trimmedEmail)
-    .maybeSingle();
-
-  if (existing.data) {
-    throw new Error("Email already registered");
-  }
+  // (duplicate-email pre-check removed — supabase.auth.signUp will reject duplicates,
+  // and the users insert is an upsert. Skipping this saves one round-trip.)
 
   // FIX: store name + role in user_metadata so onAuthStateChange
   // can use them after email confirmation
