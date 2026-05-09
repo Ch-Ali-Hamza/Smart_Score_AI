@@ -6,9 +6,7 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { AppShell } from "@/components/app-shell";
 import { teacherNav } from "@/lib/nav-config";
 import { Card, DataTable, PageHeader, Pill, StatCard } from "@/components/ui-kit";
-// FIX: removed getMarksOverTime — never existed in db.ts.
-// Chart data is now derived from getMarksByStudent using buildChartData().
-import { getStudentById, getMarksByStudent, getAttendancePercent, scoreToGrade } from "@/lib/db";
+import { getStudentPerformanceData, scoreToGrade } from "@/lib/db";
 
 export const Route = createFileRoute("/teacher/student/$id")({
   head: () => ({ meta: [{ title: "Student Profile — SmartScore AI" }] }),
@@ -63,17 +61,11 @@ function StudentProfile() {
 
   useEffect(() => {
     (async () => {
-      // FIX: removed getMarksOverTime call. Three real DB calls only.
-      // Chart data is derived from the same marks array.
-      const [s, m, att] = await Promise.all([
-        getStudentById(id),
-        getMarksByStudent(id),
-        getAttendancePercent(id),
-      ]);
-      setStudent(s);
-      setMarks(m);
-      setChartData(buildChartData(m));
-      setAttendance(att ?? 0);
+      const data = await getStudentPerformanceData(id);
+      setStudent(data.student);
+      setMarks(data.marks);
+      setChartData(buildChartData(data.marks));
+      setAttendance(data.attendance);
       setLoading(false);
     })();
   }, [id]);
