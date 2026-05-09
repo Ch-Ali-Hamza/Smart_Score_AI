@@ -19,7 +19,11 @@ export async function getStudents() {
   const { data, error } = await supabase
     .from('students')
     .select(`
-      *,
+      id,
+      user_id,
+      student_id_number,
+      class,
+      section,
       users(name, email)
     `)
     .order('created_at', { ascending: true })
@@ -86,7 +90,7 @@ export async function getMarksByStudent(
 ) {
   const { data, error } = await supabase
     .from('marks')
-    .select('*')
+    .select('id, student_id, subject, marks_obtained, total_marks, exam_type, created_at')
     .eq('student_id', studentId)
     .order('created_at', {
       ascending: true,
@@ -108,9 +112,16 @@ export async function getAllMarks() {
   const { data, error } = await supabase
     .from('marks')
     .select(`
-      *,
+      id,
+      student_id,
+      subject,
+      marks_obtained,
+      total_marks,
+      exam_type,
+      created_at,
       students(
-        *,
+        id,
+        student_id_number,
         users(name, email)
       )
     `)
