@@ -6,7 +6,7 @@ import { AppShell } from "@/components/app-shell";
 import { teacherNav } from "@/lib/nav-config";
 import { Card, DataTable, HeroHeader, Pill, StatCard } from "@/components/ui-kit";
 import { Presentation } from "lucide-react";
-import { getStudents, getAttendancePercent, getSubjectAverages, scoreToGrade, getCurrentUser } from "@/lib/db";
+import { getTeacherDashboardData, scoreToGrade } from "@/lib/db";
 
 export const Route = createFileRoute("/teacher/")({
   head: () => ({ meta: [{ title: "Teacher Dashboard — SmartScore AI" }] }),
@@ -36,29 +36,39 @@ function TeacherDashboard() {
   useEffect(() => {
     async function load() {
       try {
-        const [user, students] = await Promise.all([getCurrentUser(), getStudents()]);
+        const { user, students, marks, attendance } = await getTeacherDashboardData();
         if (user) setTeacherName(user.name);
 
-        const enriched: StudentRow[] = await Promise.all(
-          students.map(async (s: any) => {
-            const [attendance, avgs] = await Promise.all([
-              getAttendancePercent(s.id),
-              getSubjectAverages(s.id),
-            ]);
-            const att = attendance ?? 0;
-            const avg = avgs.length
-              ? Math.round(avgs.reduce((a: number, b: any) => a + b.avg, 0) / avgs.length)
-              : 0;
-            return {
-              id: s.id,
-              name: s.users?.name ?? "Unknown",
-              attendance: att,
-              avg,
-              grade: scoreToGrade(avg),
-              risk: getRisk(avg, att),
-            };
-          })
-        );
+        const marksByStudent = new Map<string, { total: number; count: number }>();
+        for (const mark of marks as any[]) {
+          const pct = mark.total_marks > 0 ? (mark.marks_obtained / mark.total_marks) * 100 : 0;
+          const current = marksByStudent.get(mark.student_id) ?? { total: 0, count: 0 };
+          marksByStudent.set(mark.student_id, { total: current.total + pct, count: current.count + 1 });
+        }
+
+        const attendanceByStudent = new Map<string, { present: number; total: number }>();
+        for (const record of attendance as any[]) {
+          const current = attendanceByStudent.get(record.student_id) ?? { present: 0, total: 0 };
+          attendanceByStudent.set(record.student_id, {
+            present: current.present + (record.status === "present" ? 1 : 0),
+            total: current.total + 1,
+          });
+        }
+
+        const enriched: StudentRow[] = students.map((s: any) => {
+          const markStats = marksByStudent.get(s.id);
+          const attendanceStats = attendanceByStudent.get(s.id);
+          const avg = markStats ? Math.round(markStats.total / markStats.count) : 0;
+          const att = attendanceStats ? Math.round((attendanceStats.present / attendanceStats.total) * 100) : 0;
+          return {
+            id: s.id,
+            name: s.users?.name ?? "Unknown",
+            attendance: att,
+            avg,
+            grade: scoreToGrade(avg),
+            risk: getRisk(avg, att),
+          };
+        });
         setRows(enriched);
       } finally {
         setLoading(false);
