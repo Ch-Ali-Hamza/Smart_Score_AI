@@ -151,19 +151,25 @@ export async function login(email: string, password: string) {
     throw new Error("Login failed");
   }
 
-  const { data: userData, error: dbError } = await supabase
+  const { data: existingUser, error: dbError } = await supabase
     .from("users")
-    .select("*")
+    .select("id, name, email, role")
     .eq("id", data.user.id)
-    .single();
+    .maybeSingle();
 
-  if (dbError || !userData) {
+  if (dbError) {
     await supabase.auth.signOut();
 
     throw new Error(
       "Account setup incomplete. Please contact support.",
     );
   }
+
+  const userData = existingUser ?? await createProfileFromAuthUser({
+    id: data.user.id,
+    email: data.user.email,
+    user_metadata: data.user.user_metadata,
+  });
 
   const user: AuthUser = {
     id: data.user.id,
@@ -243,62 +249,11 @@ export async function register(input: {
     };
   }
 
-  // Email confirmation is OFF — upsert so we don't race with the
-  // onAuthStateChange SIGNED_IN handler which may have already
-  // inserted the profile row from user_metadata.
-  const { error: userError } = await supabase
-    .from("users")
-    .upsert(
-      {
-        id: data.user.id,
-        name: trimmedName,
-        email: trimmedEmail,
-        role: input.role,
-      },
-      { onConflict: "id" },
-    );
-
-  if (userError) {
-    throw new Error(
-      "Failed to save profile: " + userError.message,
-    );
-  }
-
-  if (input.role === "student") {
-    // Only create a student record if one doesn't already exist
-    const { data: existingStudent } = await supabase
-      .from("students")
-      .select("id")
-      .eq("user_id", data.user.id)
-      .maybeSingle();
-
-    const studentIdNumber =
-      "ST-" + Date.now().toString().slice(-6);
-
-    const { error: studentError } = existingStudent
-      ? { error: null }
-      : await supabase.from("students").insert({
-          user_id: data.user.id,
-          student_id_number: studentIdNumber,
-          class: "Unassigned",
-          section: "A",
-        });
-
-    if (studentError) {
-      // Rollback users row
-      await supabase
-        .from("users")
-        .delete()
-        .eq("id", data.user.id);
-
-      await supabase.auth.signOut();
-
-      throw new Error(
-        "Failed to create student record: " +
-          studentError.message,
-      );
-    }
-  }
+  await createProfileFromAuthUser({
+    id: data.user.id,
+    email: trimmedEmail,
+    user_metadata: { name: trimmedName, role: input.role },
+  });
 
   const user: AuthUser = {
     id: data.user.id,
