@@ -28,6 +28,7 @@ export function StatCard({
   iconFg,
   icon,
   tone,
+  trend,
 }: {
   label: string;
   value: string | number;
@@ -35,21 +36,72 @@ export function StatCard({
   iconFg?: string;
   icon: ReactNode;
   tone?: "info" | "success" | "warning" | "danger";
+  trend?: string;
 }) {
-  const toneMap: Record<string, { bg: string; fg: string }> = {
-    info: { bg: "bg-info-soft", fg: "text-info-foreground" },
-    success: { bg: "bg-success-soft", fg: "text-success-foreground" },
-    warning: { bg: "bg-warning-soft", fg: "text-warning-foreground" },
-    danger: { bg: "bg-danger-soft", fg: "text-danger-foreground" },
+  const gradientMap: Record<string, string> = {
+    info: "var(--gradient-info)",
+    success: "var(--gradient-success)",
+    warning: "var(--gradient-warning)",
+    danger: "var(--gradient-danger)",
   };
-  const t = tone ? toneMap[tone] : null;
+  const grad = tone ? gradientMap[tone] : "var(--gradient-info)";
   return (
-    <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-      <div className={cn("mb-3 grid h-10 w-10 place-items-center rounded-lg", iconBg ?? t?.bg, iconFg ?? t?.fg)}>
+    <div
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 transition-all hover:-translate-y-0.5"
+      style={{ boxShadow: "var(--shadow-soft)" }}
+    >
+      <div
+        aria-hidden
+        className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-20 blur-2xl transition-opacity group-hover:opacity-40"
+        style={{ background: grad }}
+      />
+      <div
+        className={cn("mb-3 grid h-11 w-11 place-items-center rounded-xl text-white shadow-md", iconBg, iconFg)}
+        style={!iconBg ? { background: grad } : undefined}
+      >
         {icon}
       </div>
-      <div className="text-sm text-muted-foreground">{label}</div>
-      <div className="mt-1 text-2xl font-semibold text-foreground">{value}</div>
+      <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
+      <div className="mt-1 flex items-end gap-2">
+        <div className="text-3xl font-bold tracking-tight text-foreground">{value}</div>
+        {trend && <div className="pb-1 text-xs font-medium text-muted-foreground">{trend}</div>}
+      </div>
+    </div>
+  );
+}
+
+export function HeroHeader({
+  title,
+  subtitle,
+  icon,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <div
+      className="relative mb-6 overflow-hidden rounded-2xl p-6 text-white sm:p-8"
+      style={{ background: "var(--gradient-hero)", boxShadow: "var(--shadow-elevated)" }}
+    >
+      <div aria-hidden className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+      <div aria-hidden className="absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+      <div className="relative flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {icon && (
+            <div className="grid h-12 w-12 place-items-center rounded-xl bg-white/15 backdrop-blur-sm ring-1 ring-white/20 text-white">
+              {icon}
+            </div>
+          )}
+          <div>
+            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{title}</h1>
+            {subtitle && <p className="mt-1 text-sm text-white/85">{subtitle}</p>}
+          </div>
+        </div>
+        {children && <div className="flex items-center gap-2">{children}</div>}
+      </div>
     </div>
   );
 }
