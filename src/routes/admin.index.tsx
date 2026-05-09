@@ -3,7 +3,8 @@ import { Users, GraduationCap, UserCheck, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { adminNav } from "@/lib/nav-config";
-import { Card, DataTable, PageHeader, Pill, StatCard } from "@/components/ui-kit";
+import { Card, DataTable, HeroHeader, Pill, StatCard } from "@/components/ui-kit";
+import { ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/")({
