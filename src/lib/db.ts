@@ -204,7 +204,7 @@ export async function getAttendanceByStudent(
 ) {
   const { data, error } = await supabase
     .from('attendance')
-    .select('*')
+    .select('id, student_id, date, status, marked_by')
     .eq('student_id', studentId)
     .order('date', {
       ascending: false,
@@ -226,9 +226,14 @@ export async function getAllAttendance() {
   const { data, error } = await supabase
     .from('attendance')
     .select(`
-      *,
+      id,
+      student_id,
+      date,
+      status,
+      marked_by,
       students(
-        *,
+        id,
+        student_id_number,
         users(name, email)
       )
     `)
@@ -346,7 +351,7 @@ export async function markAllNotificationsRead(
 export async function getAllUsers() {
   const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select('id, name, email, role, phone, created_at')
     .order('created_at', {
       ascending: false,
     })
