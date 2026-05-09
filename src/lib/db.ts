@@ -579,6 +579,66 @@ export async function getAttendancePercent(
   )
 }
 
+export async function getStudentPerformanceData(studentId: string) {
+  const [student, marksResult, attendanceResult] = await Promise.all([
+    getStudentById(studentId),
+    supabase
+      .from('marks')
+      .select('id, student_id, subject, marks_obtained, total_marks, exam_type, created_at')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('attendance')
+      .select('status')
+      .eq('student_id', studentId),
+  ])
+
+  if (marksResult.error) throw new Error(marksResult.error.message)
+  if (attendanceResult.error) throw new Error(attendanceResult.error.message)
+
+  const attendanceRows = attendanceResult.data || []
+  const present = attendanceRows.filter((r) => r.status === 'present').length
+  const attendance = attendanceRows.length > 0
+    ? Math.round((present / attendanceRows.length) * 100)
+    : 0
+
+  return {
+    student,
+    marks: marksResult.data || [],
+    attendance,
+  }
+}
+
+export async function getStudentDashboardData(userId: string) {
+  const student = await getStudentByUserId(userId)
+
+  if (!student) {
+    return { student: null, marks: [], attendance: [] }
+  }
+
+  const [marksResult, attendanceResult] = await Promise.all([
+    supabase
+      .from('marks')
+      .select('id, student_id, subject, marks_obtained, total_marks, exam_type, created_at')
+      .eq('student_id', student.id)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('attendance')
+      .select('id, student_id, date, status')
+      .eq('student_id', student.id)
+      .order('date', { ascending: false }),
+  ])
+
+  if (marksResult.error) throw new Error(marksResult.error.message)
+  if (attendanceResult.error) throw new Error(attendanceResult.error.message)
+
+  return {
+    student,
+    marks: marksResult.data || [],
+    attendance: attendanceResult.data || [],
+  }
+}
+
 export async function getSubjectAverages(
   studentId: string
 ) {
