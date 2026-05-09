@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/app-shell";
 import { teacherNav } from "@/lib/nav-config";
 import { Card, DataTable, PageHeader, Pill } from "@/components/ui-kit";
-import { supabase } from "@/lib/supabase";
+import { getClassPerformanceData } from "@/lib/db";
 
 export const Route = createFileRoute("/teacher/weak")({
   head: () => ({ meta: [{ title: "Weak Students — SmartScore AI" }] }),
@@ -44,22 +44,15 @@ function WeakStudents() {
 
   useEffect(() => {
     async function load() {
-      const { data: marksData } = await supabase
-        .from("marks")
-        .select("student_id, marks_obtained, total_marks, users(id, name)");
-
-      const { data: attData } = await supabase
-        .from("attendance")
-        .select("student_id, status");
-
-      if (!marksData) { setLoading(false); return; }
+      const { students, marks: marksData, attendance: attData } = await getClassPerformanceData();
+      const namesByStudent = new Map((students as any[]).map((s) => [s.id, s.users?.name ?? s.student_id_number ?? s.id]));
 
       // Avg marks per student
       const markMap: Record<string, { name: string; total: number; count: number }> = {};
       for (const m of marksData as any[]) {
         const uid = m.student_id;
         const pct = m.total_marks > 0 ? (m.marks_obtained / m.total_marks) * 100 : 0;
-        if (!markMap[uid]) markMap[uid] = { name: m.users?.name ?? uid, total: 0, count: 0 };
+        if (!markMap[uid]) markMap[uid] = { name: namesByStudent.get(uid) ?? uid, total: 0, count: 0 };
         markMap[uid].total += pct;
         markMap[uid].count += 1;
       }
