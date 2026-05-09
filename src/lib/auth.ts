@@ -212,7 +212,7 @@ export async function login(email: string, password: string) {
   cachedRaw = JSON.stringify(user);
   cachedUser = user;
 
-  await insertLog({
+  void insertLog({
     user_id: data.user.id,
     action: "User login",
     status: "Success",
