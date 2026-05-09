@@ -289,7 +289,7 @@ export async function refreshCurrentUser() {
 
   const { data, error } = await supabase
     .from("users")
-    .select("*")
+    .select("id, name, email, role")
     .eq("id", current.id)
     .single();
 
