@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AppShell } from "@/components/app-shell";
 import { studentNav } from "@/lib/nav-config";
-import { Card, PageHeader, StatCard } from "@/components/ui-kit";
+import { Card, HeroHeader, StatCard } from "@/components/ui-kit";
+import { GraduationCap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { getStudentByUserId, getMarksByStudent, getAttendanceByStudent } from "@/lib/db";
 
