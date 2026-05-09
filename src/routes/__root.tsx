@@ -8,6 +8,8 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 
+import { Toaster } from "sonner";
+
 import appCss from "../styles.css?url";
 
 function NotFoundComponent() {
@@ -72,14 +74,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "SmartScore AI — Student Performance Prediction" },
+      { name: "description", content: "SmartScore AI predicts student performance, tracks progress, and helps teachers identify weak students at COMSATS University." },
+      { name: "author", content: "COMSATS University" },
+      { property: "og:title", content: "SmartScore AI — Student Performance Prediction" },
+      { property: "og:description", content: "SmartScore AI predicts student performance, tracks progress, and helps teachers identify weak students at COMSATS University." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "SmartScore AI — Student Performance Prediction" },
+      { name: "twitter:description", content: "SmartScore AI predicts student performance, tracks progress, and helps teachers identify weak students at COMSATS University." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/42d5f875-80eb-4832-a7f9-02a9f141127f/id-preview-40fdfc42--1ca90664-5803-4064-b9bf-966ea41fb743.lovable.app-1778240943169.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/42d5f875-80eb-4832-a7f9-02a9f141127f/id-preview-40fdfc42--1ca90664-5803-4064-b9bf-966ea41fb743.lovable.app-1778240943169.png" },
     ],
     links: [
       {
@@ -114,6 +120,8 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
 }
+
