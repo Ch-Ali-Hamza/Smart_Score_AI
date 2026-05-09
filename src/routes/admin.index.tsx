@@ -75,7 +75,11 @@ function AdminDashboard() {
 
   return (
     <AppShell role="admin" nav={adminNav}>
-      <PageHeader title="Welcome, Admin" />
+      <HeroHeader
+        title="Welcome, Admin"
+        subtitle="Monitor users, activity, and the overall system health."
+        icon={<ShieldCheck className="h-6 w-6" />}
+      />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Total Students" value={stats.students} tone="info" icon={<Users className="h-5 w-5" />} />
         <StatCard label="Total Teachers" value={stats.teachers} tone="success" icon={<GraduationCap className="h-5 w-5" />} />
