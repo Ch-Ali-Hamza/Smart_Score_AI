@@ -5,7 +5,7 @@ import { AppShell } from "@/components/app-shell";
 import { studentNav } from "@/lib/nav-config";
 import { Card, DataTable, PageHeader, Pill } from "@/components/ui-kit";
 import { useAuth } from "@/lib/auth";
-import { getStudentByUserId, getMarksByStudent, getAttendanceByStudent } from "@/lib/db";
+import { getStudentDashboardData } from "@/lib/db";
 
 export const Route = createFileRoute("/student/performance")({
   head: () => ({ meta: [{ title: "My Performance — SmartScore AI" }] }),
@@ -48,15 +48,9 @@ function Performance() {
     if (!auth?.id) return;
     (async () => {
       try {
-        const student = await getStudentByUserId(auth.id);
-        if (student) {
-          const [m, a] = await Promise.all([
-            getMarksByStudent(student.id),
-            getAttendanceByStudent(student.id),
-          ]);
-          setMarks(m);
-          setAttendance(a);
-        }
+        const data = await getStudentDashboardData(auth.id);
+        setMarks(data.marks);
+        setAttendance(data.attendance);
       } finally {
         setLoading(false);
       }

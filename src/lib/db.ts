@@ -19,7 +19,11 @@ export async function getStudents() {
   const { data, error } = await supabase
     .from('students')
     .select(`
-      *,
+      id,
+      user_id,
+      student_id_number,
+      class,
+      section,
       users(name, email)
     `)
     .order('created_at', { ascending: true })
@@ -86,7 +90,7 @@ export async function getMarksByStudent(
 ) {
   const { data, error } = await supabase
     .from('marks')
-    .select('*')
+    .select('id, student_id, subject, marks_obtained, total_marks, exam_type, created_at')
     .eq('student_id', studentId)
     .order('created_at', {
       ascending: true,
@@ -108,9 +112,16 @@ export async function getAllMarks() {
   const { data, error } = await supabase
     .from('marks')
     .select(`
-      *,
+      id,
+      student_id,
+      subject,
+      marks_obtained,
+      total_marks,
+      exam_type,
+      created_at,
       students(
-        *,
+        id,
+        student_id_number,
         users(name, email)
       )
     `)
@@ -193,7 +204,7 @@ export async function getAttendanceByStudent(
 ) {
   const { data, error } = await supabase
     .from('attendance')
-    .select('*')
+    .select('id, student_id, date, status, marked_by')
     .eq('student_id', studentId)
     .order('date', {
       ascending: false,
@@ -215,9 +226,14 @@ export async function getAllAttendance() {
   const { data, error } = await supabase
     .from('attendance')
     .select(`
-      *,
+      id,
+      student_id,
+      date,
+      status,
+      marked_by,
       students(
-        *,
+        id,
+        student_id_number,
         users(name, email)
       )
     `)
@@ -335,7 +351,7 @@ export async function markAllNotificationsRead(
 export async function getAllUsers() {
   const { data, error } = await supabase
     .from('users')
-    .select('*')
+    .select('id, name, email, role, phone, created_at')
     .order('created_at', {
       ascending: false,
     })
@@ -381,6 +397,50 @@ export async function getCurrentUser() {
   }
 
   return data
+}
+
+export async function getTeacherDashboardData() {
+  const [user, students, marksResult, attendanceResult] = await Promise.all([
+    getCurrentUser(),
+    getStudents(),
+    supabase
+      .from('marks')
+      .select('student_id, marks_obtained, total_marks'),
+    supabase
+      .from('attendance')
+      .select('student_id, status'),
+  ])
+
+  if (marksResult.error) throw new Error(marksResult.error.message)
+  if (attendanceResult.error) throw new Error(attendanceResult.error.message)
+
+  return {
+    user,
+    students,
+    marks: marksResult.data || [],
+    attendance: attendanceResult.data || [],
+  }
+}
+
+export async function getClassPerformanceData() {
+  const [students, marksResult, attendanceResult] = await Promise.all([
+    getStudents(),
+    supabase
+      .from('marks')
+      .select('student_id, subject, marks_obtained, total_marks, exam_type, created_at'),
+    supabase
+      .from('attendance')
+      .select('student_id, status'),
+  ])
+
+  if (marksResult.error) throw new Error(marksResult.error.message)
+  if (attendanceResult.error) throw new Error(attendanceResult.error.message)
+
+  return {
+    students,
+    marks: marksResult.data || [],
+    attendance: attendanceResult.data || [],
+  }
 }
 
 // =========================
@@ -538,6 +598,66 @@ export async function getAttendancePercent(
     (present / records.length) *
       100
   )
+}
+
+export async function getStudentPerformanceData(studentId: string) {
+  const [student, marksResult, attendanceResult] = await Promise.all([
+    getStudentById(studentId),
+    supabase
+      .from('marks')
+      .select('id, student_id, subject, marks_obtained, total_marks, exam_type, created_at')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('attendance')
+      .select('status')
+      .eq('student_id', studentId),
+  ])
+
+  if (marksResult.error) throw new Error(marksResult.error.message)
+  if (attendanceResult.error) throw new Error(attendanceResult.error.message)
+
+  const attendanceRows = attendanceResult.data || []
+  const present = attendanceRows.filter((r) => r.status === 'present').length
+  const attendance = attendanceRows.length > 0
+    ? Math.round((present / attendanceRows.length) * 100)
+    : 0
+
+  return {
+    student,
+    marks: marksResult.data || [],
+    attendance,
+  }
+}
+
+export async function getStudentDashboardData(userId: string) {
+  const student = await getStudentByUserId(userId)
+
+  if (!student) {
+    return { student: null, marks: [], attendance: [] }
+  }
+
+  const [marksResult, attendanceResult] = await Promise.all([
+    supabase
+      .from('marks')
+      .select('id, student_id, subject, marks_obtained, total_marks, exam_type, created_at')
+      .eq('student_id', student.id)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('attendance')
+      .select('id, student_id, date, status')
+      .eq('student_id', student.id)
+      .order('date', { ascending: false }),
+  ])
+
+  if (marksResult.error) throw new Error(marksResult.error.message)
+  if (attendanceResult.error) throw new Error(attendanceResult.error.message)
+
+  return {
+    student,
+    marks: marksResult.data || [],
+    attendance: attendanceResult.data || [],
+  }
 }
 
 export async function getSubjectAverages(

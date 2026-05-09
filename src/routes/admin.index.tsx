@@ -34,31 +34,29 @@ function AdminDashboard() {
 
   useEffect(() => {
     async function load() {
-      // Fetch user role counts
-      const { data: users } = await supabase
-        .from("users")
-        .select("id, role, created_at, name");
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      // Fetch recent logs/activity
-      const { data: logs } = await supabase
-        .from("logs")
-        .select("created_at, user_id, action, status, users(name, role)")
-        .order("created_at", { ascending: false })
-        .limit(10);
+      const [studentCount, teacherCount, activeCount, logsResult] = await Promise.all([
+        supabase.from("users").select("id", { count: "exact", head: true }).eq("role", "student"),
+        supabase.from("users").select("id", { count: "exact", head: true }).eq("role", "teacher"),
+        supabase.from("users").select("id", { count: "exact", head: true }).gte("created_at", thirtyDaysAgo.toISOString()),
+        supabase
+          .from("logs")
+          .select("created_at, user_id, action, status, users(name, role)")
+          .order("created_at", { ascending: false })
+          .limit(10),
+      ]);
 
-      if (users) {
-        const students = users.filter((u: any) => u.role === "student").length;
-        const teachers = users.filter((u: any) => u.role === "teacher").length;
-        // "active" = users created/seen in last 30 days as a proxy
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const active = users.filter((u: any) => new Date(u.created_at) >= thirtyDaysAgo).length;
+      setStats({
+        students: studentCount.count ?? 0,
+        teachers: teacherCount.count ?? 0,
+        active: activeCount.count ?? 0,
+        alerts: 0,
+      });
 
-        setStats({ students, teachers, active, alerts: 0 });
-      }
-
-      if (logs) {
-        const rows: ActivityRow[] = (logs as any[]).map((l) => ({
+      if (logsResult.data) {
+        const rows: ActivityRow[] = (logsResult.data as any[]).map((l) => ({
           ts: new Date(l.created_at).toLocaleString("en-PK", { dateStyle: "short", timeStyle: "short" }),
           user: l.users?.name ?? l.user_id,
           user_id: l.user_id,

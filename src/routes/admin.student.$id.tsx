@@ -5,12 +5,29 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { AppShell } from "@/components/app-shell";
 import { adminNav } from "@/lib/nav-config";
 import { Card, DataTable, PageHeader, Pill, StatCard } from "@/components/ui-kit";
-import { getStudentById, getMarksByStudent, getAttendancePercent, getMarksOverTime, scoreToGrade } from "@/lib/db";
+import { getStudentPerformanceData, scoreToGrade } from "@/lib/db";
 
 export const Route = createFileRoute("/admin/student/$id")({
   head: () => ({ meta: [{ title: "Student Profile — SmartScore AI" }] }),
   component: AdminStudentProfile,
 });
+
+function buildChartData(marks: any[]) {
+  const byWeek: Record<string, Record<string, { total: number; count: number }>> = {};
+  for (const m of marks) {
+    const d = m.created_at ? new Date(m.created_at) : new Date();
+    const week = `W${Math.ceil(d.getDate() / 7)}-${d.getMonth() + 1}`;
+    if (!byWeek[week]) byWeek[week] = {};
+    if (!byWeek[week][m.subject]) byWeek[week][m.subject] = { total: 0, count: 0 };
+    byWeek[week][m.subject].total += (m.marks_obtained / m.total_marks) * 100;
+    byWeek[week][m.subject].count++;
+  }
+  return Object.entries(byWeek).map(([week, subs]) => {
+    const row: Record<string, number | string> = { week };
+    for (const [sub, v] of Object.entries(subs)) row[sub] = Math.round(v.total / v.count);
+    return row;
+  });
+}
 
 function AdminStudentProfile() {
   const { id } = Route.useParams();
@@ -22,13 +39,8 @@ function AdminStudentProfile() {
 
   useEffect(() => {
     (async () => {
-      const [s, m, chart, att] = await Promise.all([
-        getStudentById(id),
-        getMarksByStudent(id),
-        getMarksOverTime(id),
-        getAttendancePercent(id),
-      ]);
-      setStudent(s); setMarks(m); setChartData(chart); setAttendance(att ?? 0);
+      const data = await getStudentPerformanceData(id);
+      setStudent(data.student); setMarks(data.marks); setChartData(buildChartData(data.marks)); setAttendance(data.attendance);
       setLoading(false);
     })();
   }, [id]);
