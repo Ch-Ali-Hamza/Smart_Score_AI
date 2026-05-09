@@ -5,7 +5,8 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { AppShell } from "@/components/app-shell";
 import { studentNav } from "@/lib/nav-config";
 import { Card, PageHeader, StatCard } from "@/components/ui-kit";
-import { getCurrentStudent, getStudentDashboardData } from "@/lib/db";
+import { useAuth } from "@/lib/auth";
+import { getStudentDashboardData } from "@/lib/db";
 
 export const Route = createFileRoute("/student/subject/$name")({
   head: () => ({ meta: [{ title: "Subject Detail — SmartScore AI" }] }),
@@ -14,22 +15,22 @@ export const Route = createFileRoute("/student/subject/$name")({
 
 function SubjectDetail() {
   const { name } = Route.useParams();
+  const auth = useAuth();
   const subjectName = decodeURIComponent(name);
   const [marks, setMarks] = useState<any[]>([]);
   const [attendance, setAttendance] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!auth?.id) return;
     (async () => {
-      const student = await getCurrentStudent();
-      if (!student) { setLoading(false); return; }
-      const data = await getStudentDashboardData(student.user_id);
+      const data = await getStudentDashboardData(auth.id);
       setMarks(data.marks.filter((x: any) => x.subject === subjectName));
       const present = data.attendance.filter((x: any) => x.status === "present").length;
       setAttendance(data.attendance.length > 0 ? Math.round((present / data.attendance.length) * 100) : 0);
       setLoading(false);
     })();
-  }, [subjectName]);
+  }, [auth?.id, subjectName]);
 
   const internalMarks = marks.filter(m => m.exam_type === "Internal");
   const externalMarks = marks.filter(m => m.exam_type === "External");
