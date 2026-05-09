@@ -172,7 +172,7 @@ export async function login(email: string, password: string) {
   });
 
   if (error) {
-    await insertLog({
+    void insertLog({
       user_id: null,
       action: `Failed login attempt for ${trimmedEmail}`,
       status: "Failed",
