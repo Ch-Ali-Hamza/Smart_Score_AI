@@ -34,10 +34,9 @@ function Attendance() {
   useEffect(() => {
     async function loadStudents() {
       const { data, error } = await supabase
-        .from("users")
-        .select("id, name, students(student_id_number)")
-        .eq("role", "student")
-        .order("name", { ascending: true });
+        .from("students")
+        .select("id, student_id_number, users(name)")
+        .order("created_at", { ascending: true });
 
       if (error) {
         toast.error("Failed to load students");
@@ -45,10 +44,10 @@ function Attendance() {
         return;
       }
 
-      const rows: StudentRow[] = (data ?? []).map((u: any) => ({
-        id: u.id,
-        roll: u.students?.[0]?.student_id_number ?? "—",
-        name: u.name,
+      const rows: StudentRow[] = (data ?? []).map((s: any) => ({
+        id: s.id,
+        roll: s.student_id_number ?? "—",
+        name: s.users?.name ?? "Unknown",
       }));
 
       setStudents(rows);
