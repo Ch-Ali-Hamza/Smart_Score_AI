@@ -5,7 +5,7 @@ import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart, Res
 import { AppShell } from "@/components/app-shell";
 import { teacherNav } from "@/lib/nav-config";
 import { Card, PageHeader } from "@/components/ui-kit";
-import { supabase } from "@/lib/supabase";
+import { getClassPerformanceData } from "@/lib/db";
 
 export const Route = createFileRoute("/teacher/class")({
   head: () => ({ meta: [{ title: "Performance Dashboard — SmartScore AI" }] }),
@@ -47,24 +47,15 @@ function ClassData() {
 
   useEffect(() => {
     async function load() {
-      // Load all marks joined with user names
-      const { data: marksData } = await supabase
-        .from("marks")
-        .select("student_id, subject, marks_obtained, total_marks, exam_type, users(id, name)");
-
-      // Load attendance counts
-      const { data: attData } = await supabase
-        .from("attendance")
-        .select("student_id, status");
-
-      if (!marksData) { setLoading(false); return; }
+      const { students: studentData, marks: marksData, attendance: attData } = await getClassPerformanceData();
+      const namesByStudent = new Map((studentData as any[]).map((s) => [s.id, s.users?.name ?? s.student_id_number ?? s.id]));
 
       // Build per-student avg
       const studentMap: Record<string, { name: string; total: number; count: number; id: string }> = {};
       for (const m of marksData as any[]) {
         const uid = m.student_id;
         const pct = m.total_marks > 0 ? (m.marks_obtained / m.total_marks) * 100 : 0;
-        if (!studentMap[uid]) studentMap[uid] = { id: uid, name: m.users?.name ?? uid, total: 0, count: 0 };
+        if (!studentMap[uid]) studentMap[uid] = { id: uid, name: namesByStudent.get(uid) ?? uid, total: 0, count: 0 };
         studentMap[uid].total += pct;
         studentMap[uid].count += 1;
       }
