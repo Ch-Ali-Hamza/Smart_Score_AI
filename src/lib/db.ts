@@ -422,6 +422,27 @@ export async function getTeacherDashboardData() {
   }
 }
 
+export async function getClassPerformanceData() {
+  const [students, marksResult, attendanceResult] = await Promise.all([
+    getStudents(),
+    supabase
+      .from('marks')
+      .select('student_id, subject, marks_obtained, total_marks, exam_type, created_at'),
+    supabase
+      .from('attendance')
+      .select('student_id, status'),
+  ])
+
+  if (marksResult.error) throw new Error(marksResult.error.message)
+  if (attendanceResult.error) throw new Error(attendanceResult.error.message)
+
+  return {
+    students,
+    marks: marksResult.data || [],
+    attendance: attendanceResult.data || [],
+  }
+}
+
 // =========================
 // LOGS
 // =========================
