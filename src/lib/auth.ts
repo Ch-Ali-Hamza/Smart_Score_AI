@@ -55,6 +55,49 @@ function makeInitials(name: string) {
   ).toUpperCase();
 }
 
+function normalizeRole(role: unknown): Role {
+  return role === "admin" || role === "teacher" || role === "student" ? role : "student";
+}
+
+async function createProfileFromAuthUser(authUser: {
+  id: string;
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+}) {
+  const name = typeof authUser.user_metadata?.name === "string" ? authUser.user_metadata.name : "User";
+  const role = normalizeRole(authUser.user_metadata?.role);
+  const email = authUser.email ?? "";
+
+  const { data, error } = await supabase
+    .from("users")
+    .upsert({ id: authUser.id, name, email, role }, { onConflict: "id" })
+    .select("id, name, email, role")
+    .single();
+
+  if (error) throw new Error("Failed to save profile: " + error.message);
+
+  if (role === "student") {
+    const { data: existingStudent } = await supabase
+      .from("students")
+      .select("id")
+      .eq("user_id", authUser.id)
+      .maybeSingle();
+
+    if (!existingStudent) {
+      const { error: studentError } = await supabase.from("students").insert({
+        user_id: authUser.id,
+        student_id_number: "ST-" + Date.now().toString().slice(-6),
+        class: "Unassigned",
+        section: "A",
+      });
+
+      if (studentError) throw new Error("Failed to create student record: " + studentError.message);
+    }
+  }
+
+  return data;
+}
+
 // ─────────────────────────────────────────────────────────────
 // AUTH STATE CHANGE HANDLER
 //
@@ -71,84 +114,7 @@ function makeInitials(name: string) {
 //
 // 2. No session — same as before: clear local auth state.
 // ─────────────────────────────────────────────────────────────
-supabase.auth.onAuthStateChange(async (event, session) => {
-  if (event === "SIGNED_IN" && session) {
-    // Check if profile row already exists
-    const { data: existing } = await supabase
-      .from("users")
-      .select("id")
-      .eq("id", session.user.id)
-      .maybeSingle();
-
-    // Profile missing — this happens when the user registered
-    // with email confirmation ON. Insert the profile now using
-    // the metadata we stored during signUp.
-    if (!existing) {
-      const meta = session.user.user_metadata as {
-        name?: string;
-        role?: string;
-      };
-
-      const name = meta?.name ?? "User";
-      const role = (meta?.role as Role) ?? "student";
-      const email = session.user.email ?? "";
-
-      // Insert users row
-      const { error: userError } = await supabase
-        .from("users")
-        .insert({
-          id: session.user.id,
-          name,
-          email,
-          role,
-        });
-
-      if (userError) {
-        console.error(
-          "onAuthStateChange: failed to insert user row:",
-          userError.message,
-        );
-        return;
-      }
-
-      // Insert students row if role is student
-      if (role === "student") {
-        const studentIdNumber =
-          "ST-" + Date.now().toString().slice(-6);
-
-        const { error: studentError } = await supabase
-          .from("students")
-          .insert({
-            user_id: session.user.id,
-            student_id_number: studentIdNumber,
-            class: "Unassigned",
-            section: "A",
-          });
-
-        if (studentError) {
-          console.error(
-            "onAuthStateChange: failed to insert student row:",
-            studentError.message,
-          );
-          // Rollback users row so login() doesn't half-succeed
-          await supabase
-            .from("users")
-            .delete()
-            .eq("id", session.user.id);
-          return;
-        }
-      }
-
-      await insertLog({
-        user_id: session.user.id,
-        action: "Account confirmed and profile created",
-        status: "Success",
-      }).catch(() => null);
-    }
-
-    return;
-  }
-
+supabase.auth.onAuthStateChange((_event, session) => {
   // No session — user logged out or session expired
   if (!session) {
     if (typeof window !== "undefined") {
