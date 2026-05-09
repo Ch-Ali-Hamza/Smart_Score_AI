@@ -285,15 +285,20 @@ export async function register(input: {
     };
   }
 
-  // Email confirmation is OFF — insert rows immediately
+  // Email confirmation is OFF — upsert so we don't race with the
+  // onAuthStateChange SIGNED_IN handler which may have already
+  // inserted the profile row from user_metadata.
   const { error: userError } = await supabase
     .from("users")
-    .insert({
-      id: data.user.id,
-      name: trimmedName,
-      email: trimmedEmail,
-      role: input.role,
-    });
+    .upsert(
+      {
+        id: data.user.id,
+        name: trimmedName,
+        email: trimmedEmail,
+        role: input.role,
+      },
+      { onConflict: "id" },
+    );
 
   if (userError) {
     throw new Error(
@@ -302,17 +307,24 @@ export async function register(input: {
   }
 
   if (input.role === "student") {
+    // Only create a student record if one doesn't already exist
+    const { data: existingStudent } = await supabase
+      .from("students")
+      .select("id")
+      .eq("user_id", data.user.id)
+      .maybeSingle();
+
     const studentIdNumber =
       "ST-" + Date.now().toString().slice(-6);
 
-    const { error: studentError } = await supabase
-      .from("students")
-      .insert({
-        user_id: data.user.id,
-        student_id_number: studentIdNumber,
-        class: "Unassigned",
-        section: "A",
-      });
+    const { error: studentError } = existingStudent
+      ? { error: null }
+      : await supabase.from("students").insert({
+          user_id: data.user.id,
+          student_id_number: studentIdNumber,
+          class: "Unassigned",
+          section: "A",
+        });
 
     if (studentError) {
       // Rollback users row
