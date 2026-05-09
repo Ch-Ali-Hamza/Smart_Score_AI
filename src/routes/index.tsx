@@ -111,8 +111,21 @@ function LoginPage() {
   const isRegister = mode === "register";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
-      <div className="w-full max-w-md rounded-3xl border border-border bg-card p-8 shadow-sm">
+    <main className="relative flex min-h-screen items-center justify-center px-4 py-10">
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${campusBg})` }}
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(135deg, oklch(0.27 0.06 250 / 0.78) 0%, oklch(0.32 0.10 270 / 0.7) 50%, oklch(0.30 0.08 220 / 0.78) 100%)",
+        }}
+      />
+      <div className="relative w-full max-w-md rounded-3xl border border-white/20 bg-card/95 p-8 shadow-2xl backdrop-blur-xl">
         <header className="mb-6 text-center">
           <div className="mb-3 inline-flex items-center gap-2">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-info-soft text-brand">
