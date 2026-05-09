@@ -84,8 +84,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "SmartScore AI — Student Performance Prediction" },
       { name: "twitter:description", content: "SmartScore AI predicts student performance, tracks progress, and helps teachers identify weak students at COMSATS University." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/42d5f875-80eb-4832-a7f9-02a9f141127f/id-preview-40fdfc42--1ca90664-5803-4064-b9bf-966ea41fb743.lovable.app-1778240943169.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/42d5f875-80eb-4832-a7f9-02a9f141127f/id-preview-40fdfc42--1ca90664-5803-4064-b9bf-966ea41fb743.lovable.app-1778240943169.png" },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/89670d98-a6d1-4d98-8a57-78691837d640" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/89670d98-a6d1-4d98-8a57-78691837d640" },
     ],
     links: [
       {
