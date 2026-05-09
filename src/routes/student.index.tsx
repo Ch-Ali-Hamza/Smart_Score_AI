@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AppShell } from "@/components/app-shell";
 import { studentNav } from "@/lib/nav-config";
-import { Card, PageHeader, StatCard } from "@/components/ui-kit";
+import { Card, HeroHeader, StatCard } from "@/components/ui-kit";
+import { GraduationCap } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { getStudentByUserId, getMarksByStudent, getAttendanceByStudent } from "@/lib/db";
 
@@ -87,11 +88,11 @@ function StudentDashboard() {
 
   return (
     <AppShell role="student" nav={studentNav}>
-      <div className="mb-5 rounded-xl bg-info-soft px-5 py-4 text-info-foreground">
-        <p className="text-sm font-medium">
-          Welcome back, {auth?.name} — Here is your academic overview.
-        </p>
-      </div>
+      <HeroHeader
+        title={`Welcome back, ${auth?.name ?? "Student"}`}
+        subtitle="Here is your academic overview at a glance."
+        icon={<GraduationCap className="h-6 w-6" />}
+      />
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading your data...</p>

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { Bar, BarChart, Cell, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AppShell } from "@/components/app-shell";
 import { teacherNav } from "@/lib/nav-config";
-import { Card, DataTable, PageHeader, Pill, StatCard } from "@/components/ui-kit";
+import { Card, DataTable, HeroHeader, Pill, StatCard } from "@/components/ui-kit";
+import { Presentation } from "lucide-react";
 import { getStudents, getAttendancePercent, getSubjectAverages, scoreToGrade, getCurrentUser } from "@/lib/db";
 
 export const Route = createFileRoute("/teacher/")({
@@ -71,7 +72,11 @@ function TeacherDashboard() {
 
   return (
     <AppShell role="teacher" nav={teacherNav}>
-      <PageHeader title={`Welcome, ${teacherName}`} />
+      <HeroHeader
+        title={`Welcome, ${teacherName}`}
+        subtitle="Track class performance and identify students who need support."
+        icon={<Presentation className="h-6 w-6" />}
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Total Students" value={loading ? "…" : rows.length} tone="info" icon={<Users className="h-5 w-5" />} />
